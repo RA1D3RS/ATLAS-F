@@ -1,0 +1,207 @@
+erDiagram
+    USERS {
+        uuid id PK
+        string email
+        string password_hash
+        string first_name
+        string last_name
+        string phone
+        date birth_date
+        string address
+        string city
+        string country
+        string role "admin|investor|company"
+        boolean email_verified
+        boolean phone_verified
+        date created_at
+        date updated_at
+        boolean is_active
+        string profile_picture
+    }
+    
+    ADMIN_PROFILES {
+        uuid id PK
+        uuid user_id FK
+        string department
+        date created_at
+        date updated_at
+    }
+    
+    INVESTOR_PROFILES {
+        uuid id PK
+        uuid user_id FK
+        string investor_type "retail|professional|institutional|diaspora"
+        string kyc_status "pending|approved|rejected"
+        decimal max_investment_amount
+        boolean terms_accepted
+        date created_at
+        date updated_at
+    }
+    
+    COMPANY_PROFILES {
+        uuid id PK
+        uuid user_id FK
+        string company_name
+        string legal_status "SARL|SA|Auto-entrepreneur|etc"
+        string registration_number "RC number"
+        string tax_id "ICE number"
+        string industry_sector
+        string website
+        string description
+        integer employee_count
+        date founding_date
+        string address
+        string city
+        string kyc_status "pending|approved|rejected"
+        date created_at
+        date updated_at
+    }
+    
+    DOCUMENTS {
+        uuid id PK
+        uuid user_id FK
+        uuid project_id FK "Nullable"
+        string doc_type "id_card|passport|company_registration|business_plan|financial_statements|etc"
+        string file_path
+        string original_filename
+        string mime_type
+        boolean verified
+        string verification_notes
+        date created_at
+        date updated_at
+    }
+    
+    PROJECTS {
+        uuid id PK
+        uuid company_id FK
+        string title
+        string short_description
+        text full_description
+        decimal funding_goal
+        decimal min_investment "For equity"
+        string funding_type "equity|donation"
+        string equity_structure "Description of shares/rights"
+        string status "draft|submitted|under_review|approved|rejected|active|funded|failed"
+        string industry_sector
+        string impact_type "social|environmental|both|none"
+        string video_url
+        string image_path
+        date start_date
+        date end_date
+        uuid reviewer_id FK "Admin who reviewed"
+        integer risk_rating "1-5, manual for MVP"
+        text review_notes
+        decimal platform_fee_percentage
+        date created_at
+        date updated_at
+    }
+    
+    PROJECT_UPDATES {
+        uuid id PK
+        uuid project_id FK
+        string title
+        text content
+        date created_at
+    }
+    
+    PROJECT_TEAM {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string position
+        string bio
+        string linkedin_url
+        string photo_path
+        date created_at
+        date updated_at
+    }
+    
+    PROJECT_FAQ {
+        uuid id PK
+        uuid project_id FK
+        string question
+        string answer
+        date created_at
+        date updated_at
+    }
+    
+    INVESTMENT_TRANSACTIONS {
+        uuid id PK
+        uuid investor_id FK
+        uuid project_id FK
+        decimal amount
+        string status "initiated|processing|completed|failed|refunded"
+        string payment_method
+        string payment_reference
+        boolean contract_accepted
+        string contract_file_path
+        date created_at
+        date updated_at
+    }
+    
+    DONATION_TRANSACTIONS {
+        uuid id PK
+        uuid donor_id FK "Can be anonymous"
+        uuid project_id FK
+        uuid reward_id FK "Nullable"
+        decimal amount
+        string status "initiated|processing|completed|failed"
+        string payment_method 
+        string payment_reference
+        date created_at
+        date updated_at
+    }
+    
+    REWARDS {
+        uuid id PK
+        uuid project_id FK
+        string title
+        string description
+        decimal min_donation
+        integer quantity_available
+        integer quantity_claimed
+        date estimated_delivery
+        string shipping_restrictions
+        date created_at
+        date updated_at
+    }
+    
+    MESSAGES {
+        uuid id PK
+        uuid sender_id FK
+        uuid recipient_id FK
+        uuid project_id FK "Optional"
+        string content
+        boolean read
+        date created_at
+    }
+    
+    AUDIT_LOGS {
+        uuid id PK
+        uuid user_id FK
+        string action
+        string entity_type
+        uuid entity_id
+        json old_values
+        json new_values
+        string ip_address
+        date created_at
+    }
+
+    USERS ||--o{ ADMIN_PROFILES : has
+    USERS ||--o{ INVESTOR_PROFILES : has
+    USERS ||--o{ COMPANY_PROFILES : has
+    USERS ||--o{ DOCUMENTS : uploads
+    COMPANY_PROFILES ||--o{ PROJECTS : creates
+    PROJECTS ||--o{ PROJECT_UPDATES : has
+    PROJECTS ||--o{ PROJECT_TEAM : has
+    PROJECTS ||--o{ PROJECT_FAQ : has
+    PROJECTS ||--o{ DOCUMENTS : has
+    PROJECTS ||--o{ INVESTMENT_TRANSACTIONS : receives
+    PROJECTS ||--o{ DONATION_TRANSACTIONS : receives
+    PROJECTS ||--o{ REWARDS : offers
+    INVESTOR_PROFILES ||--o{ INVESTMENT_TRANSACTIONS : makes
+    INVESTOR_PROFILES ||--o{ DONATION_TRANSACTIONS : makes
+    USERS ||--o{ MESSAGES : sends
+    USERS ||--o{ MESSAGES : receives
+    USERS ||--o{ AUDIT_LOGS : generates
