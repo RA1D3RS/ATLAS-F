@@ -1,0 +1,24 @@
+{
+    "name": "atlas-f-frontend",
+    "version": "1.0.0",
+    "scripts": {
+      "start": "react-scripts start",
+      "build": "react-scripts build",
+      "test": "react-scripts test",
+      "eject": "react-scripts eject"
+    },
+    "dependencies": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-router-dom": "^6.16.0",
+      "axios": "^1.5.1",
+      "styled-components": "^6.0.8",
+      "typescript": "^5.2.2",
+      "react-scripts": "^5.0.1"
+    },
+    "devDependencies": {
+      "@types/react": "^18.2.22",
+      "@types/react-dom": "^18.2.7",
+      "@types/styled-components": "^5.1.28"
+    }
+  }
