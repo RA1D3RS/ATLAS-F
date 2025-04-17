@@ -1,0 +1,10 @@
+{
+  "name": "atlas-f",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "docker-compose up",
+    "build": "docker-compose build"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
