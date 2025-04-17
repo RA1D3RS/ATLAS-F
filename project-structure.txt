@@ -1,0 +1,97 @@
+├── README.md                    # Documentation du projet
+├── .env.example                 # Variables d'environnement (template)
+├── .gitignore                   # Fichiers à ignorer par Git
+├── package.json                 # Dépendances et scripts pour le projet
+├── docker-compose.yml           # Configuration Docker pour le développement
+├── mobile/
+│   ├── components/              # Composants réutilisables (ex. : ProjectCard)
+│   ├── screens/                 # Écrans (ex. : LoginScreen, ProjectDetailScreen)
+│   ├── services/                # Appels API (auth, projets)
+│   ├── navigation/              # Gestion de la navigation (React Navigation)
+│   ├── utils/                   # Utilitaires
+│   ├── App.tsx                  # Point d’entrée
+│   ├── package.json             # Dépendances
+│   └── README.md                # Instructions
+├── frontend/                    # Application React
+│   ├── public/                  # Fichiers statiques
+│   ├── src/
+│   │   ├── assets/              # Images, fonts, etc.
+│   │   ├── components/          # Composants UI réutilisables
+│   │   │   ├── common/          # Composants génériques (boutons, modals, etc.)
+│   │   │   ├── forms/           # Composants de formulaires
+│   │   │   ├── layout/          # Layout components (header, footer, etc.)
+│   │   │   └── project/         # Composants spécifiques aux projets
+│   │   ├── contexts/            # Contextes React
+│   │   │   ├── AuthContext.tsx  # Contexte d'authentification
+│   │   │   └── ProjectContext.tsx # Contexte pour les projets
+│   │   ├── hooks/               # Custom hooks React
+│   │   ├── interfaces/          # Types et interfaces TypeScript
+│   │   ├── pages/               # Pages de l'application
+│   │   │   ├── admin/           # Interface administrateur
+│   │   │   ├── auth/            # Pages d'authentification
+│   │   │   ├── company/         # Interface entreprise
+│   │   │   ├── investor/        # Interface investisseur
+│   │   │   └── public/          # Pages publiques
+│   │   ├── services/            # Services API, utilities
+│   │   │   ├── api.ts           # Configuration Axios
+│   │   │   ├── auth.service.ts  # Service d'authentification
+│   │   │   ├── project.service.ts # Service pour les projets
+│   │   │   └── payment.service.ts # Service pour les paiements
+│   │   ├── utils/               # Fonctions utilitaires
+│   │   ├── App.tsx              # Composant principal
+│   │   ├── index.tsx            # Point d'entrée
+│   │   └── routes.tsx           # Définition des routes
+│   ├── package.json             # Dépendances frontend
+│   └── tsconfig.json            # Configuration TypeScript
+├── backend/                     # API Node.js/Express
+│   ├── src/
+│   │   ├── config/              # Configuration
+│   │   │   ├── database.js      # Configuration base de données 
+│   │   │   ├── passport.js      # Configuration authentification
+│   │   │   └── app.js           # Configuration application
+│   │   ├── controllers/         # Contrôleurs API
+│   │   │   ├── auth.controller.js
+│   │   │   ├── user.controller.js
+│   │   │   ├── project.controller.js
+│   │   │   ├── investment.controller.js
+│   │   │   ├── donation.controller.js
+│   │   │   └── admin.controller.js
+│   │   ├── middleware/          # Middleware
+│   │   │   ├── auth.middleware.js  # Vérification JWT
+│   │   │   ├── role.middleware.js  # Vérification rôles
+│   │   │   ├── validation.js       # Validation données
+│   │   │   └── upload.js           # Gestion uploads
+│   │   ├── models/              # Modèles de données
+│   │   │   ├── user.model.js      # Utilisateur (base)
+│   │   │   ├── investor.model.js  # Investisseur
+│   │   │   ├── company.model.js   # Entreprise
+│   │   │   ├── project.model.js   # Projet
+│   │   │   ├── investment.model.js # Investissement (equity)
+│   │   │   ├── donation.model.js  # Don avec contrepartie
+│   │   │   ├── transaction.model.js # Transactions financières
+│   │   │   └── document.model.js  # Documents (KYC, projets)
+│   │   ├── routes/              # Routes API
+│   │   │   ├── auth.routes.js
+│   │   │   ├── user.routes.js
+│   │   │   ├── project.routes.js
+│   │   │   ├── investment.routes.js
+│   │   │   ├── donation.routes.js
+│   │   │   └── admin.routes.js
+│   │   ├── services/            # Services métier
+│   │   │   ├── kyc.service.js   # Service KYC (intégration API externe)
+│   │   │   ├── payment.service.js # Service paiement (CMI/MTC)
+│   │   │   ├── email.service.js # Service d'emails
+│   │   │   ├── file.service.js  # Service de gestion de fichiers
+│   │   │   └── contract.service.js # Génération des contrats
+│   │   ├── utils/               # Utilitaires
+│   │   │   ├── logger.js        # Logging
+│   │   │   ├── errors.js        # Gestion d'erreurs
+│   │   │   └── validators.js    # Validation des données
+│   │   ├── app.js               # Initialisation de l'application
+│   │   └── server.js            # Point d'entrée
+│   ├── migrations/              # Migrations de base de données
+│   ├── package.json             # Dépendances backend
+│   └── tsconfig.json            # Configuration TypeScript (si TypeScript)
+└── database/                    # Scripts SQL
+    ├── schema.sql               # Schéma de base de données
+    └── seed.sql                 # Données initiales
