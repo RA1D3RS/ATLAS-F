@@ -1,18 +1,70 @@
 // backend/src/app.js 
+// Main application file for the backend
+
+/**
+ * Main Express application setup
+ */
 
 const express = require('express');
-const dotenv = require('dotenv');
-const sequelize = require('./config/database');
-const authRoutes = require('./routes/auth.routes');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+const fs = require('fs');
+const appConfig = require('./config/app');
+const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
+const logger = require('./utils/logger');
 
-dotenv.config();
+// Create Express application
 const app = express();
 
-app.use(express.json());
-app.use('/auth', authRoutes);
+// Create logs directory if it doesn't exist
+const logDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
-sequelize.sync({ force: true }).then(() => {
-  console.log('Database synced');
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(process.cwd(), appConfig.upload.directory);
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Setup access logs
+const accessLogStream = fs.createWriteStream(
+  path.join(logDir, 'access.log'),
+  { flags: 'a' }
+);
+
+// Apply middlewares
+app.use(helmet()); // Security headers
+app.use(cors(appConfig.cors)); // CORS configuration
+app.use(morgan('combined', { stream: accessLogStream })); // HTTP request logging
+app.use(express.json({ limit: '1mb' })); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Parse URL-encoded bodies
+
+// Static file serving for uploads
+app.use('/uploads', express.static(uploadDir));
+
+// Welcome route
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Atlas-f API',
+    version: '1.0.0',
+    status: 'running'
+  });
 });
+
+// API routes (will be added later)
+// app.use('/auth', require('./routes/auth.routes'));
+// app.use('/users', require('./routes/user.routes'));
+// app.use('/projects', require('./routes/project.routes'));
+// etc.
+
+// Handle 404 errors
+app.use(notFoundHandler);
+
+// Global error handler
+app.use(errorHandler);
 
 module.exports = app;
