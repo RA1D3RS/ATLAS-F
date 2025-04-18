@@ -1,12 +1,13 @@
 // backend/src/routes/user.route.js
 
-// Dans votre fichier de routes utilisateur
+const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
-const authMiddleware = require('../middleware/auth');
+const { authenticateJWT } = require('../middleware/auth');
+const { updateProfileValidationRules } = require('../validators/user.validator');
 
 // Routes protégées nécessitant un token JWT valide
-router.get('/profile', authMiddleware.verifyToken, userController.getMyProfile);
-router.put('/profile', authMiddleware.verifyToken, userController.updateMyProfile);
+router.get('/profile', authenticateJWT, userController.getMyProfile);
+router.put('/profile', authenticateJWT, updateProfileValidationRules, userController.updateMyProfile);
 
 module.exports = router;

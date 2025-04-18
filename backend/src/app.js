@@ -14,6 +14,7 @@ const fs = require('fs');
 const appConfig = require('./config/app');
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
 const logger = require('./utils/logger');
+const userRoutes = require('./routes/user.route');
 
 // Create Express application
 const app = express();
@@ -58,6 +59,8 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/profile', require('./routes/profile.routes'));
+app.use('/api/users', userRoutes); // User routes
+
 // TODO: Uncomment these routes as they are implemented
 // app.use('/api/users', require('./routes/user.routes'));
 // app.use('/api/projects', require('./routes/project.routes'));
