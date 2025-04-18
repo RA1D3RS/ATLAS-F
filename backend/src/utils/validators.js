@@ -255,11 +255,173 @@ const projectValidationRules = [
   rules.project.fundingType
 ];
 
+/**
+ * Règles de validation pour la mise à jour du profil utilisateur
+ * Permet la mise à jour partielle des informations de l'utilisateur
+ * et du profil spécifique (investisseur ou entreprise)
+ */
+const updateProfileValidationRules = [
+  // Validation pour les champs de base de l'utilisateur
+  body('first_name')
+    .optional()
+    .isString().withMessage('Le prénom doit être une chaîne de caractères')
+    .isLength({ min: 2, max: 50 }).withMessage('Le prénom doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('last_name')
+    .optional()
+    .isString().withMessage('Le nom doit être une chaîne de caractères')
+    .isLength({ min: 2, max: 50 }).withMessage('Le nom doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('phone')
+    .optional()
+    .matches(/^\+?[0-9]{10,15}$/).withMessage('Numéro de téléphone invalide'),
+
+  body('address')
+    .optional()
+    .isString().withMessage('L\'adresse doit être une chaîne de caractères')
+    .trim(),
+
+  body('city')
+    .optional()
+    .isString().withMessage('La ville doit être une chaîne de caractères')
+    .trim(),
+
+  body('country')
+    .optional()
+    .isString().withMessage('Le pays doit être une chaîne de caractères')
+    .trim(),
+
+  body('profile_picture')
+    .optional()
+    .isURL().withMessage('Le format de l\'URL de la photo de profil est invalide')
+    .trim(),
+
+  // Validation pour les champs du profil investisseur
+  body('investor_type')
+    .optional()
+    .isIn(['retail', 'professional', 'institutional', 'diaspora'])
+    .withMessage('Type d\'investisseur invalide'),
+
+  body('max_investment_amount')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Le montant maximum d\'investissement doit être un nombre positif')
+    .toFloat(),
+
+  body('terms_accepted')
+    .optional()
+    .isBoolean()
+    .withMessage('La valeur des termes acceptés doit être un booléen')
+    .toBoolean(),
+
+  // Validation pour les champs du profil entreprise
+  body('company_name')
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Le nom de l\'entreprise doit comporter entre 2 et 100 caractères')
+    .trim(),
+
+  body('legal_status')
+    .optional()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Le statut juridique doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('registration_number')
+    .optional()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Le numéro d\'enregistrement doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('tax_id')
+    .optional()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('L\'identifiant fiscal doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('industry_sector')
+    .optional()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Le secteur d\'activité doit comporter entre 2 et 50 caractères')
+    .trim(),
+
+  body('website')
+    .optional()
+    .isURL()
+    .withMessage('Le format de l\'URL du site web est invalide')
+    .trim(),
+
+  body('description')
+    .optional()
+    .isLength({ min: 10 })
+    .withMessage('La description doit comporter au moins 10 caractères')
+    .trim(),
+
+  body('employee_count')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Le nombre d\'employés doit être un entier positif')
+    .toInt(),
+
+  body('founding_date')
+    .optional()
+    .isDate()
+    .withMessage('Le format de la date de fondation est invalide')
+    .toDate()
+    .custom((value) => {
+      const today = new Date();
+      if (new Date(value) > today) {
+        throw new Error('La date de fondation ne peut pas être dans le futur');
+      }
+      return true;
+    })
+];
+// Validation pour les champs de projet
+const projectUpdateValidationRules = [
+  body('title')
+    .optional()
+    .isLength({ min: 5, max: 100 }).withMessage('Le titre doit comporter entre 5 et 100 caractères')
+    .trim(),
+
+  body('description')
+    .optional()
+    .isLength({ min: 10 }).withMessage('La description doit comporter au moins 10 caractères')
+    .trim(),
+
+  body('funding_goal')
+    .optional()
+    .isFloat({ min: 1000 }).withMessage('L\'objectif de financement doit être d\'au moins 1000')
+    .toFloat(),
+
+  body('funding_type')
+    .optional()
+    .isIn(['equity', 'donation']).withMessage('Type de financement invalide')
+];
+const projectStatusUpdateValidationRules = [
+  body('status')
+    .optional()
+    .isIn(['pending', 'approved', 'rejected']).withMessage('Statut invalide')
+];
+const projectInvestmentValidationRules = [
+  body('investment_amount')
+    .notEmpty().withMessage('Montant d\'investissement requis')
+    .isFloat({ min: 100 }).withMessage('Le montant d\'investissement doit être d\'au moins 100')
+    .toFloat(),
+
+  body('project_id')
+    .notEmpty().withMessage('ID de projet requis')
+    .isUUID(4).withMessage('ID de projet invalide')
+];
+
+
 module.exports = {
   validate,
   rules,
   registerValidationRules,
   investorProfileValidationRules,
   companyProfileValidationRules,
-  projectValidationRules
+  projectValidationRules,
+  updateProfileValidationRules
 };

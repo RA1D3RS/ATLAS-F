@@ -15,6 +15,7 @@ const appConfig = require('./config/app');
 const { notFoundHandler, errorHandler } = require('./middleware/error.middleware');
 const logger = require('./utils/logger');
 const userRoutes = require('./routes/user.route');
+const authRoutes = require('./routes/auth.routes');
 
 // Create Express application
 const app = express();
@@ -44,8 +45,11 @@ app.use(morgan('combined', { stream: accessLogStream })); // HTTP request loggin
 app.use(express.json({ limit: '1mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Parse URL-encoded bodies
 
+
 // Static file serving for uploads
 app.use('/uploads', express.static(uploadDir));
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -66,6 +70,11 @@ app.use('/api/users', userRoutes); // User routes
 // app.use('/api/projects', require('./routes/project.routes'));
 // etc.
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
 // Handle 404 errors
 app.use(notFoundHandler);
 
