@@ -10,6 +10,9 @@ const { DataTypes, Model } = require('sequelize');
 const bcrypt = require('bcrypt');
 const { sequelize } = require('../config/database');
 
+// Importation des modèles de profil
+const InvestorProfile = require('./investor.model');
+const CompanyProfile = require('./company.model');
 
 // Nombre de tours de salage pour le hachage bcrypt
 const SALT_ROUNDS = 10;
@@ -152,14 +155,29 @@ User.init({
       if (user.changed('password') && user.password) {
         user.password_hash = await bcrypt.hash(user.password, SALT_ROUNDS);
       }
+    },
+    
+    /**
+     * Crée automatiquement le profil correspondant au rôle de l'utilisateur
+     */
+    afterCreate: async (user) => {
+      try {
+        if (user.role === 'investor') {
+          await InvestorProfile.create({ user_id: user.id });
+          console.log(`Profil investisseur créé pour l'utilisateur ${user.id}`);
+        } else if (user.role === 'company') {
+          await CompanyProfile.create({ user_id: user.id });
+          console.log(`Profil entreprise créé pour l'utilisateur ${user.id}`);
+        }
+      } catch (error) {
+        console.error(`Erreur lors de la création du profil pour l'utilisateur ${user.id}:`, error);
+      }
     }
   }
 });
 
-// Ajout des associations dans backend/src/models/user.model.js
-
-// Ces associations seront utilisées après l'importation des modèles de profil
-User.hasOne(require('./investor.model'), { foreignKey: 'user_id', as: 'investorProfile' });
-User.hasOne(require('./company.model'), { foreignKey: 'user_id', as: 'companyProfile' });
+// Définition des associations
+User.hasOne(InvestorProfile, { foreignKey: 'user_id', as: 'investorProfile' });
+User.hasOne(CompanyProfile, { foreignKey: 'user_id', as: 'companyProfile' });
 
 module.exports = User;
