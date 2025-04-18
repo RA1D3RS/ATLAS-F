@@ -1,6 +1,6 @@
 // backend/src/app.js 
 // Main application file for the backend
-
+// This file sets up the Express application, middleware, and routes.
 /**
  * Main Express application setup
  */
@@ -55,10 +55,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// API routes (will be added later)
-// app.use('/auth', require('./routes/auth.routes'));
-// app.use('/users', require('./routes/user.routes'));
-// app.use('/projects', require('./routes/project.routes'));
+// API routes
+app.use('/api/auth', require('./routes/auth.routes'));
+// TODO: Uncomment these routes as they are implemented
+// app.use('/api/users', require('./routes/user.routes'));
+// app.use('/api/projects', require('./routes/project.routes'));
 // etc.
 
 // Handle 404 errors

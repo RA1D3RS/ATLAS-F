@@ -1,109 +1,260 @@
 // backend/src/controllers/auth.controller.js
+//  /**
+//  * Login validation rules
+//  **/
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { validationResult } = require('express-validator');
 const User = require('../models/user.model');
-require('dotenv').config();
+const { BadRequestError, UnauthorizedError } = require('../utils/errors');
+const logger = require('../utils/logger');
+const appConfig = require('../config/app');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-const register = async (req, res) => {
-  const { email, password, role } = req.body;
-
-  if (!['admin', 'investor', 'company'].includes(role)) {
-    return res.status(400).json({ error: 'Invalid role' });
-  }
-  if (!email || !password || password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-    return res.status(400).json({ error: 'Invalid email or password' });
-  }
-
+/**
+ * Contrôleur pour gérer l'inscription d'un nouvel utilisateur
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @param {Function} next - Fonction next d'Express
+ */
+const register = async (req, res, next) => {
   try {
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Email already in use' });
+    // Valider les données d'entrée
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array() 
+      });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // Extraire les données d'inscription du corps de la requête
+    const { 
+      email, 
+      password, 
+      first_name, 
+      last_name, 
+      role, 
+      phone = null,
+      address = null,
+      city = null,
+      country = null
+    } = req.body;
 
-    const user = await User.create({
+    // Vérifier si le rôle est autorisé pour l'inscription
+    if (role === 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Inscription avec le rôle admin non autorisée'
+      });
+    }
+
+    // Créer l'utilisateur
+    const newUser = await User.create({
       email,
-      password: hashedPassword,
+      password, // Le hook beforeCreate du modèle s'occupera du hachage
+      first_name,
+      last_name,
       role,
-      is_verified: false,
+      phone,
+      address,
+      city,
+      country,
+      email_verified: false,
+      phone_verified: false,
+      is_active: true
     });
 
-    const verificationToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    const verificationUrl = `${process.env.APP_URL}/auth/verify-email?token=${verificationToken}`;
+    // TODO: Intégrer l'appel au service d'email pour la vérification
+    // exemple: await emailService.sendVerificationEmail(newUser);
+    logger.info(`Placeholder: Envoyer email de vérification à ${newUser.email}`);
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject: 'Vérifiez votre email',
-      html: `<p>Cliquez sur ce lien pour vérifier votre email : <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+    // Générer un jeton de vérification d'email (utilisé pour le lien de vérification)
+    const verificationToken = jwt.sign(
+      { userId: newUser.id, action: 'verify_email' },
+      appConfig.jwt.secret,
+      { expiresIn: '24h' }
+    );
+
+    // Renvoyer une réponse de succès
+    res.status(201).json({
+      status: 'success',
+      message: 'Utilisateur créé avec succès. Veuillez vérifier votre adresse email.',
+      data: {
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+        verified: newUser.email_verified
+      }
     });
-
-    res.status(201).json({ message: 'User registered. Please verify your email.' });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    logger.error('Erreur lors de l\'inscription', { error: error.message });
+    next(error);
   }
 };
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
-
+/**
+ * Contrôleur pour gérer la connexion d'un utilisateur
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @param {Function} next - Fonction next d'Express
+ */
+const login = async (req, res, next) => {
   try {
+    const { email, password } = req.body;
+
+    // Validations de base
+    if (!email || !password) {
+      throw new BadRequestError('Email et mot de passe requis');
+    }
+
+    // Rechercher l'utilisateur par email
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      throw new UnauthorizedError('Identifiants invalides');
     }
 
-    if (!user.is_verified) {
-      return res.status(403).json({ error: 'Email not verified' });
+    // Vérifier si l'email est vérifié
+    if (!user.email_verified) {
+      throw new UnauthorizedError('Veuillez vérifier votre adresse email avant de vous connecter');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    // Vérifier si le compte est actif
+    if (!user.is_active) {
+      throw new UnauthorizedError('Votre compte a été désactivé');
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Vérifier le mot de passe
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedError('Identifiants invalides');
+    }
 
-    res.json({ token });
+    // Générer le token JWT
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      appConfig.jwt.secret,
+      { expiresIn: appConfig.jwt.expiresIn }
+    );
+
+    // Renvoyer le token avec les informations de base de l'utilisateur
+    res.json({
+      status: 'success',
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          first_name: user.first_name,
+          last_name: user.last_name
+        }
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    next(error);
   }
 };
 
-const verifyEmail = async (req, res) => {
-  const { token } = req.query;
-
+/**
+ * Contrôleur pour vérifier l'email d'un utilisateur
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @param {Function} next - Fonction next d'Express
+ */
+const verifyEmail = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
+    const { token } = req.query;
 
+    if (!token) {
+      throw new BadRequestError('Token de vérification manquant');
+    }
+
+    // Vérifier le token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, appConfig.jwt.secret);
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new BadRequestError('Le token de vérification a expiré');
+      }
+      throw new BadRequestError('Token de vérification invalide');
+    }
+
+    // Vérifier si le token est bien pour la vérification d'email
+    if (decoded.action !== 'verify_email') {
+      throw new BadRequestError('Type de token invalide');
+    }
+
+    // Chercher l'utilisateur
+    const user = await User.findByPk(decoded.userId);
     if (!user) {
-      return res.status(400).json({ error: 'Invalid token' });
+      throw new BadRequestError('Utilisateur non trouvé');
     }
 
-    await user.update({ is_verified: true });
+    // Vérifier si l'email est déjà vérifié
+    if (user.email_verified) {
+      return res.json({
+        status: 'success',
+        message: 'Email déjà vérifié'
+      });
+    }
 
-    res.json({ message: 'Email verified successfully' });
+    // Mettre à jour le statut de vérification
+    await user.update({ email_verified: true });
+
+    res.json({
+      status: 'success',
+      message: 'Email vérifié avec succès'
+    });
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ error: 'Verification token expired' });
-    }
-    res.status(500).json({ error: 'Server error' });
+    next(error);
   }
 };
 
-module.exports = { register, login, verifyEmail };
+/**
+ * Contrôleur pour demander la réinitialisation du mot de passe
+ * @param {Object} req - Requête Express
+ * @param {Object} res - Réponse Express
+ * @param {Function} next - Fonction next d'Express
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new BadRequestError('Email requis');
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // Pour des raisons de sécurité, nous ne révélons pas si l'email existe ou non
+      return res.json({
+        status: 'success',
+        message: 'Si votre email existe dans notre système, vous recevrez un lien de réinitialisation'
+      });
+    }
+
+    // Générer un token de réinitialisation
+    const resetToken = jwt.sign(
+      { userId: user.id, action: 'reset_password' },
+      appConfig.jwt.secret,
+      { expiresIn: '1h' }
+    );
+
+    // TODO: Intégrer l'appel au service d'email pour envoyer le lien de réinitialisation
+    // exemple: await emailService.sendPasswordResetEmail(user.email, resetToken);
+    logger.info(`Placeholder: Envoyer email de réinitialisation à ${user.email}`);
+
+    res.json({
+      status: 'success',
+      message: 'Si votre email existe dans notre système, vous recevrez un lien de réinitialisation'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { register, login, verifyEmail, forgotPassword };
