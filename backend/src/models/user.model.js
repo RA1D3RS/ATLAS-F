@@ -10,6 +10,7 @@ const { DataTypes, Model } = require('sequelize');
 const bcrypt = require('bcrypt');
 const { sequelize } = require('../config/database');
 
+
 // Nombre de tours de salage pour le hachage bcrypt
 const SALT_ROUNDS = 10;
 
@@ -154,5 +155,11 @@ User.init({
     }
   }
 });
+
+// Ajout des associations dans backend/src/models/user.model.js
+
+// Ces associations seront utilisées après l'importation des modèles de profil
+User.hasOne(require('./investor.model'), { foreignKey: 'user_id', as: 'investorProfile' });
+User.hasOne(require('./company.model'), { foreignKey: 'user_id', as: 'companyProfile' });
 
 module.exports = User;

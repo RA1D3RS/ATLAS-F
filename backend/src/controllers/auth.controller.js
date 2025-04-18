@@ -10,6 +10,10 @@ const User = require('../models/user.model');
 const { BadRequestError, UnauthorizedError } = require('../utils/errors');
 const logger = require('../utils/logger');
 const appConfig = require('../config/app');
+const InvestorProfile = require('../models/investor.model');
+const CompanyProfile = require('../models/company.model');
+const sequelize = require('../config/database');
+const { sequelize } = require('../config/database');
 
 /**
  * Contrôleur pour gérer l'inscription d'un nouvel utilisateur
@@ -25,7 +29,7 @@ const register = async (req, res, next) => {
       return res.status(400).json({ 
         status: 'error',
         message: 'Validation failed',
-        errors: errors.array() 
+        errors: errors.array()     
       });
     }
 
@@ -50,29 +54,53 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Créer l'utilisateur
-    const newUser = await User.create({
-      email,
-      password, // Le hook beforeCreate du modèle s'occupera du hachage
-      first_name,
-      last_name,
-      role,
-      phone,
-      address,
-      city,
-      country,
-      email_verified: false,
-      phone_verified: false,
-      is_active: true
+    // Vérifier si le rôle est valide
+    if (!['investor', 'company'].includes(role)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Rôle invalide'
+      });
+    }
+
+    // Utiliser une transaction pour garantir l'atomicité
+    const result = await sequelize.transaction(async (t) => {
+      // Créer l'utilisateur
+      const newUser = await User.create({
+        email,
+        password,
+        first_name,
+        last_name,
+        role,
+        phone,
+        address,
+        city,
+        country,
+        email_verified: false,
+        phone_verified: false,
+        is_active: true
+      }, { transaction: t });
+
+      // Créer le profil associé en fonction du rôle
+      if (role === 'investor') {
+        await InvestorProfile.create({
+          user_id: newUser.id
+        }, { transaction: t });
+      } else if (role === 'company') {
+        await CompanyProfile.create({
+          user_id: newUser.id
+        }, { transaction: t });
+      }
+
+      return newUser;
     });
 
     // TODO: Intégrer l'appel au service d'email pour la vérification
-    // exemple: await emailService.sendVerificationEmail(newUser);
-    logger.info(`Placeholder: Envoyer email de vérification à ${newUser.email}`);
+    // exemple: await emailService.sendVerificationEmail(result);
+    logger.info(`Placeholder: Envoyer email de vérification à ${result.email}`);
 
     // Générer un jeton de vérification d'email (utilisé pour le lien de vérification)
     const verificationToken = jwt.sign(
-      { userId: newUser.id, action: 'verify_email' },
+      { userId: result.id, action: 'verify_email' },
       appConfig.jwt.secret,
       { expiresIn: '24h' }
     );
@@ -82,14 +110,14 @@ const register = async (req, res, next) => {
       status: 'success',
       message: 'Utilisateur créé avec succès. Veuillez vérifier votre adresse email.',
       data: {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-        verified: newUser.email_verified
+        userId: result.id,
+        email: result.email,
+        role: result.role,
+        verified: result.email_verified
       }
     });
   } catch (error) {
-    logger.error('Erreur lors de l\'inscription', { error: error.message });
+    logger.error('Erreur lors de l\'inscription:', error);
     next(error);
   }
 };

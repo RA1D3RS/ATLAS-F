@@ -57,6 +57,7 @@ app.get('/', (req, res) => {
 
 // API routes
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/profile', require('./routes/profile.routes'));
 // TODO: Uncomment these routes as they are implemented
 // app.use('/api/users', require('./routes/user.routes'));
 // app.use('/api/projects', require('./routes/project.routes'));
