@@ -121,4 +121,9 @@ CompanyProfile.init({
 // Définir la relation avec le modèle User
 CompanyProfile.belongsTo(User, { foreignKey: 'user_id' });
 
+// Définir l'association avec Project de façon différée
+CompanyProfile.associate = (models) => {
+  CompanyProfile.hasMany(models.Project, { foreignKey: 'company_id' });
+};
+
 module.exports = CompanyProfile;

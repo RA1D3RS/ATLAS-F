@@ -176,8 +176,15 @@ User.init({
   }
 });
 
-// Définition des associations
+// Définition des associations (à la fin du fichier)
 User.hasOne(InvestorProfile, { foreignKey: 'user_id', as: 'investorProfile' });
 User.hasOne(CompanyProfile, { foreignKey: 'user_id', as: 'companyProfile' });
+
+// Définir les associations avec les modèles qui ne sont pas encore importés
+// pour éviter les dépendances circulaires
+User.associate = (models) => {
+  User.hasMany(models.Document, { foreignKey: 'user_id' });
+  User.hasMany(models.Project, { as: 'ReviewedProjects', foreignKey: 'reviewer_id' });
+};
 
 module.exports = User;
