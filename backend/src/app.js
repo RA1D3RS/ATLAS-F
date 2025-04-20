@@ -51,6 +51,14 @@ app.use('/uploads', express.static(uploadDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
+// Setup API versioning
+app.use('/api/v1', (req, res, next) => {
+  // You can add version-specific logic here if needed
+  next();
+});
+// Setup API documentation
+app.use('/api/docs', express.static(path.join(__dirname, 'docs')));
+
 // Welcome route
 app.get('/', (req, res) => {
   res.json({
@@ -63,11 +71,20 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/profile', require('./routes/profile.routes'));
-app.use('/api/users', userRoutes); // User routes
+app.use('/api/users', require('./routes/user.routes')); // User routes
+app.use('/api/projects', require('./routes/project.routes')); // Utilisation des routes de projet
+app.use('/api/investors', require('./routes/investor.routes')); // Investor routes
+app.use('/api/companies', require('./routes/company.routes')); // Company routes
+app.use('/api/notifications', require('./routes/notification.routes')); // Notification routes
+app.use('/api/transactions', require('./routes/transaction.routes')); // Transaction routes
+app.use('/api/faq', require('./routes/faq.routes')); // FAQ routes
+
 
 // TODO: Uncomment these routes as they are implemented
-// app.use('/api/users', require('./routes/user.routes'));
-// app.use('/api/projects', require('./routes/project.routes'));
+//
+// app.use('/api/faq-categories', require('./routes/faqCategory.routes')); // FAQ Category routes
+// app.use('/api/faq-questions', require('./routes/faqQuestion.routes')); // FAQ Question routes
+// app.use('/api/faq-answers', require('./routes/faqAnswer.routes')); // FAQ Answer routes
 // etc.
 
 // Error handling middleware
