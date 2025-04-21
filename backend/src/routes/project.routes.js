@@ -5,8 +5,6 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth.middleware');
 const { isCompany, isAdmin, isCompanyOrAdmin } = require('../middleware/role.middleware');
 const projectController = require('../controllers/project.controller');
-const { verifyProjectAccess, isProjectOwnerOrAdmin } = require('../middlewares/project.middleware');
-const { verifyToken, isAdmin } = require('../middlewares/auth.middleware');
 
 
 /**
