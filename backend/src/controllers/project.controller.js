@@ -2,6 +2,7 @@
 
 const { Project, CompanyProfile } = require('../models');
 const { formatError } = require('../utils/errors');
+const { checkProjectAccess } = require('../utils/project_permissions');
 
 /**
  * Contrôleur pour la gestion des projets
@@ -117,32 +118,20 @@ const projectController = {
    */
   updateProject: async (req, res) => {
     try {
-      const project = await Project.findByPk(req.params.id);
-      
-      if (!project) {
-        return res.status(404).json({
-          error: 'Project not found',
-          code: 'PROJECT_NOT_FOUND'
-        });
-      }
+      // Utiliser la fonction checkProjectAccess pour vérifier l'accès au projet
+      // Seuls les projets en statut 'draft' peuvent être modifiés par leur propriétaire
+      const project = await checkProjectAccess(
+        req.params.id,
+        req.user.id,
+        ['draft']
+      );
 
-      // Vérifier que l'utilisateur est le propriétaire du projet ou un admin
-      const companyProfile = await CompanyProfile.findOne({
-        where: { user_id: req.user.id }
-      });
-      
-      if (req.user.role !== 'admin' && (!companyProfile || project.company_id !== companyProfile.id)) {
-        return res.status(403).json({
-          error: 'Access denied. You are not the owner of this project.',
-          code: 'AUTH_NOT_PROJECT_OWNER'
-        });
-      }
-
-      // Ne permettre la modification que des projets en état "draft"
-      if (project.status !== 'draft' && req.user.role !== 'admin') {
-        return res.status(403).json({
-          error: 'Cannot update project. Only drafts can be modified.',
-          code: 'PROJECT_NOT_EDITABLE'
+      // Si l'utilisateur est admin, il peut ignorer les restrictions de statut
+      if (req.user.role === 'admin') {
+        await project.update(req.body);
+        return res.status(200).json({
+          message: 'Project updated successfully by admin',
+          project
         });
       }
 
@@ -166,34 +155,13 @@ const projectController = {
    */
   submitProject: async (req, res) => {
     try {
-      const project = await Project.findByPk(req.params.id);
-      
-      if (!project) {
-        return res.status(404).json({
-          error: 'Project not found',
-          code: 'PROJECT_NOT_FOUND'
-        });
-      }
-
-      // Vérifier que l'utilisateur est le propriétaire du projet
-      const companyProfile = await CompanyProfile.findOne({
-        where: { user_id: req.user.id }
-      });
-      
-      if (!companyProfile || project.company_id !== companyProfile.id) {
-        return res.status(403).json({
-          error: 'Access denied. You are not the owner of this project.',
-          code: 'AUTH_NOT_PROJECT_OWNER'
-        });
-      }
-
-      // Vérifier que le projet est en état "draft"
-      if (project.status !== 'draft') {
-        return res.status(400).json({
-          error: 'Project has already been submitted.',
-          code: 'PROJECT_ALREADY_SUBMITTED'
-        });
-      }
+      // Utiliser la fonction checkProjectAccess pour vérifier l'accès au projet
+      // Seuls les projets en statut 'draft' peuvent être soumis pour révision
+      const project = await checkProjectAccess(
+        req.params.id,
+        req.user.id,
+        ['draft']
+      );
 
       // Mettre à jour le statut du projet
       await project.update({ status: 'submitted' });
