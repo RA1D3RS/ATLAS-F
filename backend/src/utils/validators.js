@@ -210,6 +210,55 @@ const rules = {
       .isIn(['equity', 'donation']).withMessage('Type de financement invalide')
   },
 
+  // Nouvelle section pour les règles de validation des documents
+  document: {
+    docType: body('doc_type')
+      .notEmpty().withMessage('Type de document requis')
+      .isIn(['identity', 'business_registration', 'business_plan', 'financial_statement', 'pitch_deck', 'legal_document', 'other'])
+      .withMessage('Type de document invalide'),
+
+    title: body('title')
+      .notEmpty().withMessage('Titre du document requis')
+      .isString().withMessage('Le titre doit être une chaîne de caractères')
+      .isLength({ min: 2, max: 100 }).withMessage('Le titre doit comporter entre 2 et 100 caractères')
+      .trim(),
+
+    description: body('description')
+      .optional()
+      .isString().withMessage('La description doit être une chaîne de caractères')
+      .isLength({ max: 500 }).withMessage('La description ne doit pas dépasser 500 caractères')
+      .trim(),
+
+    fileUrl: body('file_url')
+      .notEmpty().withMessage('URL du fichier requise')
+      .isURL().withMessage('Format d\'URL invalide')
+      .trim(),
+
+    projectId: body('project_id')
+      .optional()
+      .isUUID(4).withMessage('ID de projet invalide'),
+
+    userId: body('user_id')
+      .optional()
+      .isUUID(4).withMessage('ID d\'utilisateur invalide'),
+
+    expiryDate: body('expiry_date')
+      .optional()
+      .isDate().withMessage('Format de date d\'expiration invalide')
+      .toDate()
+      .custom((value) => {
+        const today = new Date();
+        if (new Date(value) < today) {
+          throw new Error('La date d\'expiration ne peut pas être dans le passé');
+        }
+        return true;
+      }),
+
+    status: body('status')
+      .optional()
+      .isIn(['pending', 'approved', 'rejected']).withMessage('Statut invalide')
+  },
+
   id: param('id')
     .isUUID(4).withMessage('ID invalide')
 };
@@ -253,6 +302,60 @@ const projectValidationRules = [
   rules.project.description,
   rules.project.fundingGoal,
   rules.project.fundingType
+];
+
+/**
+ * Document validation rules pour la création et la mise à jour des documents
+ */
+const documentValidationRules = [
+  rules.document.docType,
+  rules.document.title,
+  rules.document.description,
+  rules.document.fileUrl,
+  rules.document.projectId,
+  rules.document.userId,
+  rules.document.expiryDate,
+  rules.document.status
+];
+
+/**
+ * Document validation rules pour la création avec les champs minimums requis
+ */
+const documentCreateValidationRules = [
+  rules.document.docType,
+  rules.document.title,
+  rules.document.fileUrl
+];
+
+/**
+ * Document validation rules pour la mise à jour partielle
+ */
+const documentUpdateValidationRules = [
+  body('doc_type')
+    .optional()
+    .isIn(['identity', 'business_registration', 'business_plan', 'financial_statement', 'pitch_deck', 'legal_document', 'other'])
+    .withMessage('Type de document invalide'),
+
+  body('title')
+    .optional()
+    .isString().withMessage('Le titre doit être une chaîne de caractères')
+    .isLength({ min: 2, max: 100 }).withMessage('Le titre doit comporter entre 2 et 100 caractères')
+    .trim(),
+
+  body('description')
+    .optional()
+    .isString().withMessage('La description doit être une chaîne de caractères')
+    .isLength({ max: 500 }).withMessage('La description ne doit pas dépasser 500 caractères')
+    .trim(),
+
+  body('file_url')
+    .optional()
+    .isURL().withMessage('Format d\'URL invalide')
+    .trim(),
+
+  body('status')
+    .optional()
+    .isIn(['pending', 'approved', 'rejected']).withMessage('Statut invalide')
 ];
 
 /**
@@ -423,5 +526,11 @@ module.exports = {
   investorProfileValidationRules,
   companyProfileValidationRules,
   projectValidationRules,
-  updateProfileValidationRules
+  updateProfileValidationRules,
+  documentValidationRules,
+  documentCreateValidationRules, 
+  documentUpdateValidationRules,
+  projectUpdateValidationRules,
+  projectStatusUpdateValidationRules,
+  projectInvestmentValidationRules
 };
