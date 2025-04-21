@@ -10,7 +10,7 @@ const { formatError } = require('../utils/errors');
  * @param {boolean} adminBypass - Si true, les admins peuvent ignorer les restrictions de statut
  * @returns {Function} Middleware Express
  */
-exports.verifyProjectAccess = (allowedStatuses, adminBypass = true) => {
+const verifyProjectAccess = (allowedStatuses, adminBypass = true) => {
   return async (req, res, next) => {
     try {
       // Si l'utilisateur est admin et que adminBypass est activé, on saute la vérification
@@ -49,7 +49,7 @@ exports.verifyProjectAccess = (allowedStatuses, adminBypass = true) => {
  * Middleware qui vérifie si un utilisateur est propriétaire d'un projet ou admin
  * sans tenir compte du statut du projet
  */
-exports.isProjectOwnerOrAdmin = async (req, res, next) => {
+const isProjectOwnerOrAdmin = async (req, res, next) => {
   try {
     const projectId = req.params.id;
     
@@ -74,4 +74,9 @@ exports.isProjectOwnerOrAdmin = async (req, res, next) => {
     const formattedError = formatError(error);
     res.status(formattedError.statusCode || 500).json(formattedError);
   }
+};
+
+module.exports = {
+  verifyProjectAccess,
+  isProjectOwnerOrAdmin
 };
