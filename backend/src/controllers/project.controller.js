@@ -1,6 +1,6 @@
 // backend/src/controllers/project.controller.js
 
-const { Project, CompanyProfile } = require('../models');
+const { Project, CompanyProfile, Document } = require('../models');
 const { formatError } = require('../utils/errors');
 const { checkProjectAccess } = require('../utils/project_permissions');
 
@@ -151,7 +151,8 @@ const projectController = {
 
   /**
    * Soumettre un projet pour approbation
-   * @route POST /api/projects/:id/submit
+   * @route PUT /api/projects/:id/submit
+   * @description Vérifie que tous les champs critiques sont remplis et change le statut à 'submitted'
    */
   submitProject: async (req, res) => {
     try {
@@ -163,8 +164,56 @@ const projectController = {
         ['draft']
       );
 
+      // Liste des champs critiques obligatoires pour soumettre un projet
+      const requiredFields = [
+        'title', 
+        'description', 
+        'funding_goal', 
+        'industry_sector', 
+        'impact_type',
+        'duration_months',
+        'expected_return_rate'
+      ];
+
+      // Vérification des champs critiques manquants
+      const missingFields = requiredFields.filter(field => {
+        return !project[field] || project[field].toString().trim() === '';
+      });
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: 'Missing required fields for project submission',
+          code: 'MISSING_REQUIRED_FIELDS',
+          missingFields
+        });
+      }
+
+      // Vérifier si les documents requis sont bien attachés au projet
+      const requiredDocuments = ['business_plan', 'financial_statements'];
+      const projectDocuments = await Document.findAll({
+        where: { 
+          project_id: project.id,
+          doc_type: requiredDocuments
+        }
+      });
+
+      // Vérifier quels types de documents requis manquent
+      const documentTypes = projectDocuments.map(doc => doc.doc_type);
+      const missingDocuments = requiredDocuments.filter(docType => !documentTypes.includes(docType));
+
+      if (missingDocuments.length > 0) {
+        return res.status(400).json({
+          error: 'Missing required documents for project submission',
+          code: 'MISSING_REQUIRED_DOCUMENTS',
+          missingDocuments
+        });
+      }
+
       // Mettre à jour le statut du projet
-      await project.update({ status: 'submitted' });
+      await project.update({ 
+        status: 'submitted',
+        submitted_at: new Date()
+      });
 
       res.status(200).json({
         message: 'Project submitted for review successfully',
