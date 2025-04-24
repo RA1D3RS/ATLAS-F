@@ -16,6 +16,7 @@ const { notFoundHandler, errorHandler } = require('./middleware/error.middleware
 const logger = require('./utils/logger');
 const userRoutes = require('./routes/user.route');
 const authRoutes = require('./routes/auth.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 // Create Express application
 const app = express();
@@ -78,6 +79,7 @@ app.use('/api/companies', require('./routes/company.routes')); // Company routes
 app.use('/api/notifications', require('./routes/notification.routes')); // Notification routes
 app.use('/api/transactions', require('./routes/transaction.routes')); // Transaction routes
 app.use('/api/faq', require('./routes/faq.routes')); // FAQ routes
+app.use('/api/admin', adminRoutes); // Admin routes
 
 
 // TODO: Uncomment these routes as they are implemented
