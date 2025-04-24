@@ -44,6 +44,10 @@
 │   ├── package.json             # Dépendances frontend
 │   └── tsconfig.json            # Configuration TypeScript
 ├── backend/                     # API Node.js/Express
+│   ├── .env.example                 # Variables d'environnement (template)
+│   ├── .gitignore                   # Fichiers à ignorer par Git
+│   ├── package.json                 # Dépendances et scripts pour le backend
+│   ├── dockerfile           # Docker 
 │   ├── src/
 │   │   ├── config/              # Configuration
 │   │   │   ├── database.js      # Configuration base de données 
@@ -53,11 +57,14 @@
 │   │   │   ├── auth.controller.js
 │   │   │   ├── user.controller.js
 │   │   │   ├── project.controller.js
+│   │   │   ├── document.controller.js
 │   │   │   ├── investment.controller.js
 │   │   │   ├── donation.controller.js
 │   │   │   └── admin.controller.js
 │   │   ├── middleware/          # Middleware
 │   │   │   ├── auth.middleware.js  # Vérification JWT
+│   │   │   ├── error.middleware.js  # Gestion des erreurs
+│   │   │   ├── project.middleware.js  # Vérification accès projet
 │   │   │   ├── role.middleware.js  # Vérification rôles
 │   │   │   ├── validation.js       # Validation données
 │   │   │   └── upload.js           # Gestion uploads
@@ -66,6 +73,10 @@
 │   │   │   ├── investor.model.js  # Investisseur
 │   │   │   ├── company.model.js   # Entreprise
 │   │   │   ├── project.model.js   # Projet
+│   │   │   ├── project_faq.model.js   # Structure FAQ Projet
+│   │   │   ├── project_team.model.js   # Structure équipe Projet
+│   │   │   ├── reward.model.js   # Contrepartie Dons
+│   │   │   ├── index.js            # Point d'entrée pour les modèles
 │   │   │   ├── investment.model.js # Investissement (equity)
 │   │   │   ├── donation.model.js  # Don avec contrepartie
 │   │   │   ├── transaction.model.js # Transactions financières
@@ -74,6 +85,8 @@
 │   │   │   ├── auth.routes.js
 │   │   │   ├── user.routes.js
 │   │   │   ├── project.routes.js
+│   │   │   ├── profile.routes.js
+│   │   │   ├── document.routes.js
 │   │   │   ├── investment.routes.js
 │   │   │   ├── donation.routes.js
 │   │   │   └── admin.routes.js
@@ -84,10 +97,13 @@
 │   │   │   ├── file.service.js  # Service de gestion de fichiers
 │   │   │   └── contract.service.js # Génération des contrats
 │   │   ├── utils/               # Utilitaires
+│   │   │   ├── auth.validator.js   # Validation inscriptions utilisateur
+│   │   │   ├── project.permissions.js   # Permissions d'accès projet
 │   │   │   ├── logger.js        # Logging
 │   │   │   ├── errors.js        # Gestion d'erreurs
 │   │   │   └── validators.js    # Validation des données
 │   │   ├── app.js               # Initialisation de l'application
+│   │   ├── associations.js      # centralise associations entre modèles
 │   │   └── server.js            # Point d'entrée
 │   ├── migrations/              # Migrations de base de données
 │   ├── package.json             # Dépendances backend
