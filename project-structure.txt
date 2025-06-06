@@ -90,12 +90,13 @@
 │   │   │   ├── investment.routes.js
 │   │   │   ├── donation.routes.js
 │   │   │   └── admin.routes.js
-│   │   ├── services/            # Services métier
-│   │   │   ├── kyc.service.js   # Service KYC (intégration API externe)
-│   │   │   ├── payment.service.js # Service paiement (CMI/MTC)
-│   │   │   ├── email.service.js # Service d'emails
-│   │   │   ├── file.service.js  # Service de gestion de fichiers
-│   │   │   └── contract.service.js # Génération des contrats
+│   │   ├── services/                       # Services métier
+│   │   │   ├── kyc.service.js              # Service KYC (intégration API externe)
+│   │   │   ├── payment.service.js          # Service paiement (CMI/MTC)
+│   │   │   ├── email.service.js            # Service d'emails
+│   │   │   ├── notification.service.js     # Service de notification
+│   │   │   ├── file.service.js             # Service de gestion de fichiers
+│   │   │   └── contract.service.js         # Génération des contrats
 │   │   ├── utils/               # Utilitaires
 │   │   │   ├── auth.validator.js   # Validation inscriptions utilisateur
 │   │   │   ├── project.permissions.js   # Permissions d'accès projet
